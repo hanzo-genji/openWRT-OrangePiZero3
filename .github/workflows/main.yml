@@ -1,0 +1,59 @@
+name: OpenWrt Compile
+
+on:
+  repository_dispatch:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 8 * * 5'
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+  CONFIG_FILE: configs/zero3.config
+  DIY_SCRIPT: diy-script.sh
+
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    if: github.event.repository.owner.id == github.event.sender.id
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Initialization Environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo -E apt-get -qq update
+        sudo -E apt-get -qq install $(curl -fsSL https://is.gd/depend_ubuntu2004)
+
+    - name: Clone Source Code
+      run: git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+
+    - name: Load Custom Configuration
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config || true
+        [ -e $DIY_SCRIPT ] && mv $DIY_SCRIPT openwrt/ || true
+
+    - name: Build OpenWrt
+      id: build
+      working-directory: openwrt
+      env:
+        FIRMWARE: ${{ github.workspace }}/firmware
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        make defconfig
+        make download -j8
+        make -j$(nproc) || make -j1 V=s
+        mkdir -p $FIRMWARE
+        find bin/targets/ -type f -name '*.img*' -executable -exec cp -f '{}' $FIRMWARE/ ';'
+        
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: OpenWrt
+        path: ${{ steps.build.env.FIRMWARE }}
