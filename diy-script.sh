@@ -3,10 +3,6 @@
 # 修改默认IP
 # sed -i 's/192.168.0.55/192.168.1.233/g' package/base-files/files/bin/config_generate
 
-# 添加 Docker 支持
-git clone --depth=1 https://github.com/lisaac/luci-app-dockerman.git package/luci-app-dockerman
-git clone --depth=1 https://github.com/lisaac/docker-ce.git package/docker-ce
-
 # 更改默认 Shell 为 zsh
 # sed -i 's/\/bin\/ash/\/usr\/bin\/zsh/g' package/base-files/files/etc/passwd
 
@@ -73,6 +69,10 @@ find package/luci-theme-*/* -type f -name '*luci-theme-*' -print -exec sed -i '/
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/controller/*.lua
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/model/cbi/v2ray_server/*.lua
 # sed -i 's/services/vpn/g' feeds/luci/applications/luci-app-v2ray-server/luasrc/view/v2ray_server/*.htm
+
+# 添加 Docker 支持
+git clone --depth=1 https://github.com/lisaac/luci-app-dockerman.git package/luci-app-dockerman
+git clone --depth=1 https://github.com/lisaac/docker-ce.git package/docker-ce
 
 ./scripts/feeds update -a
 ./scripts/feeds install -a
